@@ -9,9 +9,7 @@ macro(add_urdfdom_library)
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
     "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
   target_link_libraries(${add_urdfdom_library_LIBNAME} PUBLIC
-    ${add_urdfdom_library_LINK}
     ${console_bridge_link_libs}
-    ${urdfdom_headers_link_libs}
     tinyxml::tinyxml)
   if(NOT CMAKE_CXX_STANDARD)
     target_compile_features(${add_urdfdom_library_LIBNAME} PUBLIC cxx_std_14)
@@ -21,17 +19,7 @@ macro(add_urdfdom_library)
     SOVERSION ${URDF_MAJOR_MINOR_VERSION})
 endmacro()
 
-if(TARGET console_bridge::console_bridge)
-  set(console_bridge_link_libs "console_bridge::console_bridge")
-else()
-  set(console_bridge_link_libs "console_bridge")
-endif()
-
-if(TARGET urdfdom_headers::urdfdom_headers)
-  set(urdfdom_headers_link_libs "urdfdom_headers::urdfdom_headers")
-else()
-  set(urdfdom_headers_link_libs "")
-endif()
+set(console_bridge_link_libs "console_bridge::console_bridge")
 
 add_urdfdom_library(
   LIBNAME
