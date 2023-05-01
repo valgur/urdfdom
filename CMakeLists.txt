@@ -45,16 +45,7 @@ endif (MSVC OR MSVC90 OR MSVC10)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-find_package(tinyxml_vendor QUIET)
-find_package(TinyXML)
-# bionic has not cmake module, workaround
-if (NOT TinyXML_FOUND AND UNIX)
-  include(FindPkgConfig)
-  pkg_check_modules (TinyXML tinyxml)
-else()
-  # Make it fail in platforms without pkgconfig
-  find_package(TinyXML REQUIRED) # bionic has not cmake module
-endif()
+find_package(tinyxml REQUIRED CONFIG)
 find_package(urdfdom_headers 1.0 REQUIRED)
 find_package(console_bridge_vendor QUIET) # Provides console_bridge 0.4.0 on platforms without it.
 find_package(console_bridge REQUIRED)
@@ -66,48 +57,4 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}"
 
 enable_testing()
 
-if(WIN32 AND NOT CYGWIN)
-  set(CMAKE_CONFIG_INSTALL_DIR CMake)
-else()
-  set(CMAKE_CONFIG_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR}/${PROJECT_NAME}/cmake)
-endif()
-string(REGEX REPLACE "[^/]+" ".." RELATIVE_PATH_CMAKE_DIR_TO_PREFIX "${CMAKE_CONFIG_INSTALL_DIR}")
-string(REGEX REPLACE "[^/]+" ".." RELATIVE_PATH_LIBDIR_TO_PREFIX "${CMAKE_INSTALL_LIBDIR}")
-
 add_subdirectory(urdf_parser)
-
-set(PKG_NAME ${PROJECT_NAME})
-set(PKG_LIBRARIES urdfdom_sensor urdfdom_model_state urdfdom_model urdfdom_world)
-set(PKG_DEPENDS urdfdom_headers console_bridge)
-set(PKG_EXPORTS urdfdom)
-set(cmake_conf_file "cmake/urdfdom-config.cmake")
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/${cmake_conf_file}.in" "${CMAKE_BINARY_DIR}/${cmake_conf_file}" @ONLY)
-install(FILES package.xml DESTINATION share/${PROJECT_NAME})
-install(FILES ${CMAKE_BINARY_DIR}/${cmake_conf_file}
-  DESTINATION ${CMAKE_CONFIG_INSTALL_DIR} COMPONENT cmake)
-
-# Make the package config file
-if (NOT MSVC)
-  set(PKG_DESC "Unified Robot Description Format")
-  set(PKG_DEPENDS "urdfdom_headers console_bridge") # make the list separated by spaces instead of ;
-  set(PKG_URDF_LIBS "-lurdfdom_sensor -lurdfdom_model_state -lurdfdom_model -lurdfdom_world")
-  set(pkg_conf_file "cmake/pkgconfig/urdfdom.pc")
-  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/${pkg_conf_file}.in" "${CMAKE_BINARY_DIR}/${pkg_conf_file}" @ONLY)
-  install(FILES ${CMAKE_BINARY_DIR}/${pkg_conf_file}
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig/ COMPONENT pkgconfig)
-endif()
-
-
-# Add uninstall target
-# Ref: http://www.cmake.org/Wiki/CMake_FAQ#Can_I_do_.22make_uninstall.22_with_CMake.3F
-configure_file(
-  "${PROJECT_SOURCE_DIR}/cmake/uninstall.cmake.in"
-  "${PROJECT_BINARY_DIR}/uninstall.cmake" IMMEDIATE @ONLY)
-add_custom_target(uninstall
-  "${CMAKE_COMMAND}" -P "${PROJECT_BINARY_DIR}/uninstall.cmake")
-
-message(STATUS "Configuration successful. Type make to compile urdfdom")
-
-SET_DIRECTORY_PROPERTIES(PROPERTIES
-  ADDITIONAL_MAKE_CLEAN_FILES ${CMAKE_BINARY_DIR}/cmake/urdfdom-config.cmake
-  ADDITIONAL_MAKE_CLEAN_FILES ${CMAKE_BINARY_DIR}/cmake/pkgconfig/urdfdom.pc)
